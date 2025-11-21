@@ -12,14 +12,14 @@ let colors = {
 
 function preload() {
   // Carico il dataset
-  table = loadTable('dataset_biodiversità - dataset.csv', 'csv', 'header');
+  table = loadTable('data/data_main.csv', 'csv', 'header');
 }
 
 function setup() {
+    print("Numero righe caricate: " + table.getRowCount());
   createCanvas(windowWidth, windowHeight);
-  noLoop(); // FONDAMENTALE: Ferma il loop di disegno. Disegneremo solo una volta.
+  noLoop(); // Ferma il loop di disegno. Disegneremo solo una volta.
 
-  // 1. Definiamo i centri per i 4 regni (disposti a croce o quadrato)
   let cx = width / 2;
   let cy = height / 2;
   let dist = min(width, height) / 4; 
@@ -31,7 +31,6 @@ function setup() {
     "CHROMISTA": createVector(cx + dist, cy + dist)
   };
 
-  // 2. Creazione delle Bolle dai dati
   for (let r = 0; r < table.getRowCount(); r++) {
     let kingdom = table.getString(r, 'Kingdom');
     let name = table.getString(r, 'Name');
@@ -54,11 +53,8 @@ function setup() {
       bubbles.push(new Bubble(startX, startY, raggio, kingdom, name));
     }
   }
-
-  // 3. IL "TRUCCO" STATICO:
-  // Eseguiamo la simulazione fisica tantissime volte in un colpo solo
-  // senza disegnare nulla. Il browser calcolerà tutto in un attimo.
-  let simulazioni = 1500; // Più è alto, più sono ordinati, ma ci mette un attimo a caricare
+  
+  let simulazioni = 1500; 
   print("Calcolo posizioni in corso...");
   
   for (let i = 0; i < simulazioni; i++) {
@@ -73,7 +69,7 @@ function setup() {
 function draw() {
   background(0); // Sfondo nero
 
-  // Disegna le etichette dei Regni sullo sfondo
+  // Disegno le etichette dei Regni sullo sfondo
   textAlign(CENTER, CENTER);
   textSize(20);
   textStyle(BOLD);
@@ -83,13 +79,12 @@ function draw() {
     text(k, kingdomCenters[k].x, kingdomCenters[k].y - 100); // Un po' sopra il gruppo
   }
 
-  // Disegna tutte le bolle (ora sono ferme nella posizione finale)
+  // Disegna tutte le bolle 
   for (let b of bubbles) {
     b.show();
   }
 }
 
-// --- CLASSE BUBBLE ---
 class Bubble {
   constructor(x, y, r, kingdom, name) {
     this.pos = createVector(x, y);
@@ -165,5 +160,4 @@ function cleanNumber(strVal) {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  // Nota: se ridimensioni, dovresti ricaricare la pagina per ricalcolare le posizioni
 }
