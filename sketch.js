@@ -3,10 +3,10 @@ let zones = [];
 
 // CONFIGURAZIONE COLORI
 let colors = {
-  "animalia": "#B96A82",  // Arancione
-  "plantae": "#A6C3A0",   // Verde
-  "fungi": "#A59382",     // Azzurro
-  "chromista": "#8096AD"  // Rosso/Rosa
+  "animalia": "#B96A82",  
+  "plantae": "#A6C3A0",   
+  "fungi": "#A59382",     
+  "chromista": "#8096AD"  
 };
 
 // Moltiplicatore grandezza
