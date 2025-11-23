@@ -1,163 +1,312 @@
 let table;
-let bubbles = [];
-let kingdomCenters = {}; 
+let zones = [];
 
-// Colori per i 4 Regni
+// CONFIGURAZIONE COLORI
 let colors = {
-  "ANIMALIA": "#F7931E", // Arancione
-  "PLANTAE": "#ED1C24",  // Rosso
-  "FUNGI": "#29ABE2",    // Azzurro
-  "CHROMISTA": "#39B54A" // Verde
+  "animalia": "#B96A82",  // Arancione
+  "plantae": "#A6C3A0",   // Verde
+  "fungi": "#A59382",     // Azzurro
+  "chromista": "#8096AD"  // Rosso/Rosa
+};
+
+// Moltiplicatore grandezza
+let scaleFactor = 0.8; 
+
+let kingdomVisibility = {
+  "animalia": true,
+  "plantae": true,
+  "fungi": true,
+  "chromista": true
 };
 
 function preload() {
-  // Carico il dataset
-  table = loadTable('data/data_main.csv', 'csv', 'header');
+  // Assicurati che il percorso sia giusto!
+  table = loadTable('data/dataset_biodiversità - regni x aree.csv', 'csv', 'header');
 }
 
 function setup() {
-    print("Numero righe caricate: " + table.getRowCount());
   createCanvas(windowWidth, windowHeight);
-  noLoop(); // Ferma il loop di disegno. Disegneremo solo una volta.
-
-  let cx = width / 2;
-  let cy = height / 2;
-  let dist = min(width, height) / 4; 
+  noLoop(); 
   
-  kingdomCenters = {
-    "ANIMALIA": createVector(cx - dist, cy - dist),
-    "PLANTAE": createVector(cx + dist, cy - dist),
-    "FUNGI": createVector(cx - dist, cy + dist),
-    "CHROMISTA": createVector(cx + dist, cy + dist)
-  };
+  // Non serve più randomSeed perché non useremo funzioni random!
 
+  let validZoneIndex = 0; // Contatore per posizionare le zone in spirale
+
+  // 1. CREAZIONE ZONE
   for (let r = 0; r < table.getRowCount(); r++) {
-    let kingdom = table.getString(r, 'Kingdom');
-    let name = table.getString(r, 'Name');
+    let zoneName = table.getString(r, 0); 
     
-    // Pulizia dei numeri (via i punti)
-    let cr = cleanNumber(table.getString(r, 'CR'));
-    let en = cleanNumber(table.getString(r, 'EN'));
-    let vu = cleanNumber(table.getString(r, 'VU'));
-    let totalVal = cr + en + vu;
+    // Ignora la riga TOTAL
+    if (zoneName === 'TOTAL') continue; 
 
-    if (totalVal > 0 && kingdomCenters[kingdom]) {
-      // Calcolo raggio basato sull'area
-      let raggio = sqrt(totalVal) * 0.8; 
-      raggio = constrain(raggio, 3, 60); // Limiti min/max
+    let total = table.getNum(r, "TOTAL");
+    let counts = {
+      "animalia": table.getNum(r, "animalia"),
+      "plantae": table.getNum(r, "plantae"),
+      "fungi": table.getNum(r, "fungi"),
+      "chromista": table.getNum(r, "chromista")
+    };
 
-      // Posizione iniziale casuale (vicino al centro per iniziare)
-      let startX = width/2 + random(-50, 50);
-      let startY = height/2 + random(-50, 50);
-
-      bubbles.push(new Bubble(startX, startY, raggio, kingdom, name));
+    if (total > 0) {
+      // Passiamo 'validZoneIndex' per calcolare la posizione fissa
+      zones.push(new Zone(zoneName, total, counts, validZoneIndex));
+      validZoneIndex++;
     }
   }
-  
-  let simulazioni = 1500; 
-  print("Calcolo posizioni in corso...");
-  
-  for (let i = 0; i < simulazioni; i++) {
-    for (let b of bubbles) {
-      b.move();
-      b.collide(bubbles);
+
+  // 2. SIMULAZIONE FISICA ZONE
+  // Ora che partono tutte ordinate, la simulazione darà sempre lo stesso risultato
+  print("Calcolo layout...");
+  let zoneSimSteps = 2000;
+  for (let i = 0; i < zoneSimSteps; i++) {
+    for (let z of zones) {
+      z.move(); 
+      z.collide(zones);
     }
   }
-  print("Fatto!");
+
+  // 3. SIMULAZIONE FISICA REGNI
+  for (let z of zones) {
+    let innerSimSteps = 1000;
+    for (let i = 0; i < innerSimSteps; i++) {
+      for (let k of z.kingdoms) {
+        k.move(z.r);
+        k.collide(z.kingdoms);
+      }
+    }
+  }
+
+  createFilters();
+}
+
+// Funzione per creare l'interfaccia
+function createFilters() {
+  let startY = 20; // Posizione verticale iniziale
+  let startX = 20; // Posizione orizzontale
+  
+  // Titolo della legenda
+  let title = createDiv("FILTRA REGNI:");
+  title.position(startX, startY);
+  title.style('color', '#000000');
+  title.style('font-family', 'Arial');
+  title.style('font-size', '12px');
+  title.style('font-weight', 'bold');
+  
+  startY += 25;
+
+  // Ciclo per creare una checkbox per ogni colore
+  for (let key in colors) {
+    // Crea la checkbox (label, valore iniziale)
+    let cb = createCheckbox(' ' + key.toUpperCase(), true);
+    
+    cb.position(startX, startY);
+    
+    // Stile CSS per renderle belle
+    cb.style('color', colors[key]); // Colore del testo uguale al cerchio
+    cb.style('font-family', 'Arial');
+    cb.style('font-size', '12px');
+    
+    // Quando clicchi, aggiorna la variabile e ridisegna
+    cb.changed(() => {
+      kingdomVisibility[key] = cb.checked();
+      redraw(); 
+    });
+
+    startY += 20; // Spazio per la prossima riga
+  }
 }
 
 function draw() {
-  background(0); // Sfondo nero
+  background("#E1DDD3");
+  translate(width / 2, height / 2);
 
-  // Disegno le etichette dei Regni sullo sfondo
-  textAlign(CENTER, CENTER);
-  textSize(20);
-  textStyle(BOLD);
-  noStroke();
-  for (let k in kingdomCenters) {
-    fill(colors[k]); 
-    text(k, kingdomCenters[k].x, kingdomCenters[k].y - 100); // Un po' sopra il gruppo
-  }
-
-  // Disegna tutte le bolle 
-  for (let b of bubbles) {
-    b.show();
+  for (let z of zones) {
+    z.show();
   }
 }
 
-class Bubble {
-  constructor(x, y, r, kingdom, name) {
-    this.pos = createVector(x, y);
-    this.r = r;
-    this.kingdom = kingdom;
+// --- CLASSE ZONA ---
+class Zone {
+  constructor(name, total, counts, index) {
     this.name = name;
-    this.vel = createVector(0, 0);
-    this.col = color(colors[kingdom] || "#999");
+    
+    // --- MODIFICA DETERMINISTICA ---
+    // Invece di random, usiamo una Spirale di Archimede basata sull'indice
+    // Ogni zona avrà una posizione di partenza FISSA unica
+    let angle = index * 2.0; // Angolo aumenta progressivamente
+    let distance = 50 + (index * 15); // Distanza aumenta progressivamente
+    this.pos = createVector(cos(angle) * distance, sin(angle) * distance);
+    // -------------------------------
+    
+    this.r = sqrt(total) * scaleFactor * 1.75; 
+    this.kingdoms = [];
+    
+    // Creazione sottogruppi
+    for (let key in counts) {
+      let val = counts[key];
+      if (val > 0) {
+        this.kingdoms.push(new Kingdom(key, val));
+      }
+    }
   }
 
   move() {
-    // Attrazione verso il centro del proprio regno
-    let center = kingdomCenters[this.kingdom];
+    let center = createVector(0, 0);
     let attraction = p5.Vector.sub(center, this.pos);
-    attraction.setMag(0.8); // Forza attrazione
-    this.vel.add(attraction);
-    
-    this.vel.mult(0.5); // Alto attrito per fermarle subito
-    this.pos.add(this.vel);
+    attraction.setMag(0.5); 
+    this.pos.add(attraction);
   }
 
   collide(others) {
     for (let other of others) {
       if (other !== this) {
-        let d = dist(this.pos.x, this.pos.y, other.pos.x, other.pos.y);
-        let minDist = this.r + other.r + 2; // Distanza minima (raggi + margine)
-
+        let d = this.pos ? this.pos.dist(other.pos) : this.relPos.dist(other.relPos); 
+        let minDist = this.r + other.r + 35; 
+        
         if (d < minDist) {
-          // Calcola repulsione
-          let angle = atan2(this.pos.y - other.pos.y, this.pos.x - other.pos.x);
-          let targetX = this.pos.x + cos(angle) * minDist;
-          let targetY = this.pos.y + sin(angle) * minDist;
+          // Calcolo l'ESATTA sovrapposizione
+          let overlap = minDist - d;
           
-          let ax = (targetX - other.pos.x) * 0.05; // "Molla" rigida
-          let ay = (targetY - other.pos.y) * 0.05;
+          // Trovo la direzione per scappare via dall'altro cerchio
+          let vec;
+          if (this.pos) {
+             vec = p5.Vector.sub(this.pos, other.pos); 
+          } else {
+             vec = p5.Vector.sub(this.relPos, other.relPos); 
+          }
+          if (vec.mag() === 0) vec = p5.Vector.random2D();
           
-          this.vel.x -= ax;
-          this.vel.y -= ay;
+          // Mi sposto esattamente della metà della sovrapposizione
+          vec.setMag(overlap * 0.5); 
+          
+          if (this.pos) this.pos.add(vec);
+          else this.relPos.add(vec);
         }
       }
     }
   }
 
-  show() {
-    // Disegno cerchio
-    stroke(255);
-    strokeWeight(0.5);
-    this.col.setAlpha(200);
-    fill(this.col);
+show() {
+    // 1. Disegno cerchio esterno (Zona)
+    noStroke(); 
+    fill("#F2F0E5"); 
     circle(this.pos.x, this.pos.y, this.r * 2);
 
-    // Disegno testo se c'è spazio
-    if (this.r > 12) {
-      fill(255);
-      noStroke();
-      textSize(this.r / 2.2); // Testo proporzionale al cerchio
-      textAlign(CENTER, CENTER);
+    // 2. Disegno testo curvo
+    noStroke();
+    fill("#000000");
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    textStyle(BOLD);
+
+    let label = this.name.toUpperCase();
+    let textRadius = this.r + 18; 
+    
+    let totalAngle = textWidth(label) / textRadius;
+    
+    // Parto da Sinistra per andare a Destra 
+    let currentAngle = HALF_PI + (totalAngle / 2);
+
+    for (let i = 0; i < label.length; i++) {
+      let char = label.charAt(i);
+      let w = textWidth(char);
       
-      // Accorcia nome se troppo lungo
-      let label = this.name;
-      if (label.length > 9) label = label.substring(0, 8) + ".";
+      let charAngle = w / textRadius;
       
-      text(label, this.pos.x, this.pos.y);
+      // Sottraggo metà dell'angolo per trovare il centro della lettera
+      let theta = currentAngle - charAngle / 2;
+      
+      let x = this.pos.x + cos(theta) * textRadius;
+      let y = this.pos.y + sin(theta) * textRadius;
+
+      push();
+      translate(x, y);
+      rotate(theta - HALF_PI); 
+      text(char, 0, 0);
+      pop();
+
+      // Mi sposto indietro (verso destra) per la prossima lettera
+      currentAngle -= charAngle;
+    }
+
+    // 3. Disegno i cerchi interni (Regni) 
+    for (let k of this.kingdoms) {
+      let absX = this.pos.x + k.relPos.x;
+      let absY = this.pos.y + k.relPos.y;
+      k.show(absX, absY);
     }
   }
 }
 
-// Helper pulizia numeri
-function cleanNumber(strVal) {
-  if (!strVal) return 0;
-  return float(strVal.toString().replace(/\./g, ""));
+// --- CLASSE REGNO ---
+class Kingdom {
+  constructor(type, value) {
+    this.type = type;
+    this.value = value;
+    this.r = sqrt(value) * scaleFactor;
+    
+    // --- MODIFICA DETERMINISTICA ---
+    // Posizione iniziale fissa in base al tipo (Nord, Sud, Est, Ovest)
+    // Così non usiamo random nemmeno qui
+    let offset = 10;
+    if (type === 'animalia') this.relPos = createVector(-offset, -offset); // Nord-Ovest
+    else if (type === 'plantae') this.relPos = createVector(offset, -offset); // Nord-Est
+    else if (type === 'fungi') this.relPos = createVector(-offset, offset);   // Sud-Ovest
+    else this.relPos = createVector(offset, offset);                          // Sud-Est (chromista)
+    // -------------------------------
+  }
+
+  move(zoneRadius) {
+    let centerPush = this.relPos.copy().setMag(0.1);
+    this.relPos.add(centerPush);
+
+    let d = this.relPos.mag();
+    let maxDist = zoneRadius - this.r - 2; 
+    
+    if (d > maxDist && maxDist > 0) {
+      this.relPos.setMag(maxDist); 
+    }
+  }
+
+  collide(others) {
+    for (let other of others) {
+      if (other !== this) {
+        let d = this.pos ? this.pos.dist(other.pos) : this.relPos.dist(other.relPos); 
+        let minDist = this.r + other.r + 3; 
+        
+        if (d < minDist) {
+          // Calcolo l'ESATTA sovrapposizione
+          let overlap = minDist - d;
+          
+          // Trovo la direzione per scappare via dall'altro cerchio
+          let vec;
+          if (this.pos) {
+             vec = p5.Vector.sub(this.pos, other.pos); 
+          } else {
+             vec = p5.Vector.sub(this.relPos, other.relPos); 
+          }
+          if (vec.mag() === 0) vec = p5.Vector.random2D();
+          
+          // Mi sposto esattamente della metà della sovrapposizione
+          vec.setMag(overlap * 0.5); 
+          
+          if (this.pos) this.pos.add(vec);
+          else this.relPos.add(vec);
+        }
+      }
+    }
+  }
+
+  show(x, y) {
+    if (kingdomVisibility[this.type] === false) return;
+    fill(colors[this.type]);
+    noStroke();
+    circle(x, y, this.r * 2);
+  }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  // Nota: se ridimensioni ora ridisegnerà la spirale iniziale,
+  // ma manterrà la stessa logica coerente.
 }
