@@ -27,10 +27,8 @@ function preload() {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   noLoop(); 
-  
-  // Non serve più randomSeed perché non useremo funzioni random!
 
-  let validZoneIndex = 0; // Contatore per posizionare le zone in spirale
+  let validZoneIndex = 0; 
 
   // 1. CREAZIONE ZONE
   for (let r = 0; r < table.getRowCount(); r++) {
@@ -48,14 +46,13 @@ function setup() {
     };
 
     if (total > 0) {
-      // Passiamo 'validZoneIndex' per calcolare la posizione fissa
+      // per calcolare la posizione fissa
       zones.push(new Zone(zoneName, total, counts, validZoneIndex));
       validZoneIndex++;
     }
   }
 
   // 2. SIMULAZIONE FISICA ZONE
-  // Ora che partono tutte ordinate, la simulazione darà sempre lo stesso risultato
   print("Calcolo layout...");
   let zoneSimSteps = 2000;
   for (let i = 0; i < zoneSimSteps; i++) {
@@ -79,10 +76,9 @@ function setup() {
   createFilters();
 }
 
-// Funzione per creare l'interfaccia
 function createFilters() {
-  let startY = 20; // Posizione verticale iniziale
-  let startX = 20; // Posizione orizzontale
+  let startY = 20; 
+  let startX = 20; 
   
   // Titolo della legenda
   let title = createDiv("FILTRA REGNI:");
@@ -92,27 +88,54 @@ function createFilters() {
   title.style('font-size', '12px');
   title.style('font-weight', 'bold');
   
-  startY += 25;
+  startY += 30;
 
-  // Ciclo per creare una checkbox per ogni colore
+  // Ciclo per creare i pulsanti personalizzati
   for (let key in colors) {
-    // Crea la checkbox (label, valore iniziale)
-    let cb = createCheckbox(' ' + key.toUpperCase(), true);
     
-    cb.position(startX, startY);
+    // 1. Creo un contenitore per la riga (Cerchio + Testo)
+    let row = createDiv();
+    row.position(startX, startY);
+    row.style('display', 'flex');         // Allino cerchio e testo
+    row.style('align-items', 'center');   // Centro verticalmente
+    row.style('cursor', 'pointer');       // Cambio il cursore in "manina"
     
-    // Stile CSS per renderle belle
-    cb.style('color', colors[key]); // Colore del testo uguale al cerchio
-    cb.style('font-family', 'Arial');
-    cb.style('font-size', '12px');
+    // 2. Creo il "Pallino" (che sostituisce la checkbox)
+    let dot = createDiv();
+    dot.style('width', '14px');           // Larghezza
+    dot.style('height', '14px');          // Altezza
+    dot.style('border-radius', '50%');    // Lo rende rotondo
+    dot.style('border', `2px solid ${colors[key]}`); // Bordo sempre colorato
+    dot.style('background-color', colors[key]);      // Inizialmente PIENO (attivo)
+    dot.style('margin-right', '10px');    // Spazio tra pallino e testo
+    dot.parent(row); 
     
-    // Quando clicchi, aggiorna la variabile e ridisegna
-    cb.changed(() => {
-      kingdomVisibility[key] = cb.checked();
-      redraw(); 
-    });
+    // 3. Creo l'etichetta di testo
+    let label = createDiv(key.toUpperCase());
+    label.style('font-family', 'Arial');
+    label.style('font-size', '12px');
+    label.style('color', '#000');
+    label.parent(row); 
 
-    startY += 20; // Spazio per la prossima riga
+    // 4. Gestione del Click
+    (function(k, d) {
+        row.mousePressed(() => {
+            // A. Inverto lo stato (Vero -> Falso, Falso -> Vero)
+            kingdomVisibility[k] = !kingdomVisibility[k];
+
+            // B. Aggiorno la grafica del pallino
+            if (kingdomVisibility[k]) {
+                d.style('background-color', colors[k]); 
+            } else {
+                d.style('background-color', 'transparent'); 
+            }
+
+            // C. Ridisegno il canvas
+            redraw(); 
+        });
+    })(key, dot);
+
+    startY += 25; // Spazio per la prossima riga
   }
 }
 
@@ -125,13 +148,11 @@ function draw() {
   }
 }
 
-// --- CLASSE ZONA ---
 class Zone {
   constructor(name, total, counts, index) {
     this.name = name;
     
-    // --- MODIFICA DETERMINISTICA ---
-    // Invece di random, usiamo una Spirale di Archimede basata sull'indice
+    // Invece di random, uso una Spirale di Archimede basata sull'indice
     // Ogni zona avrà una posizione di partenza FISSA unica
     let angle = index * 2.0; // Angolo aumenta progressivamente
     let distance = 50 + (index * 15); // Distanza aumenta progressivamente
@@ -164,7 +185,6 @@ class Zone {
         let minDist = this.r + other.r + 35; 
         
         if (d < minDist) {
-          // Calcolo l'ESATTA sovrapposizione
           let overlap = minDist - d;
           
           // Trovo la direzione per scappare via dall'altro cerchio
@@ -245,7 +265,6 @@ class Kingdom {
     this.value = value;
     this.r = sqrt(value) * scaleFactor;
     
-    // --- MODIFICA DETERMINISTICA ---
     // Posizione iniziale fissa in base al tipo (Nord, Sud, Est, Ovest)
     // Così non usiamo random nemmeno qui
     let offset = 10;
