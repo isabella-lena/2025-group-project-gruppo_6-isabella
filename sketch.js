@@ -157,7 +157,6 @@ class Zone {
     let angle = index * 2.0; // Angolo aumenta progressivamente
     let distance = 50 + (index * 15); // Distanza aumenta progressivamente
     this.pos = createVector(cos(angle) * distance, sin(angle) * distance);
-    // -------------------------------
     
     this.r = sqrt(total) * scaleFactor * 1.75; 
     this.kingdoms = [];
