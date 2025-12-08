@@ -1,330 +1,556 @@
-let table;
-let zones = [];
+let data_aree, data_animali, data_piante, data_funghi, data_cromisti;
+let areas = [];
+let selectedArea = "south america"; 
+let menuOpen = false;
 
-// CONFIGURAZIONE COLORI
-let colors = {
-  "animalia": "#B96A82",  
-  "plantae": "#A6C3A0",   
-  "fungi": "#A59382",     
-  "chromista": "#8096AD"  
+const COLORS = {
+  Animalia: "#B96A82",
+  Plantae: "#A6C3A0",
+  Fungi: "#A59382",
+  Chromista: "#8096AD"
 };
 
-// Moltiplicatore grandezza
-let scaleFactor = 0.8; 
+const BG = "#E1DDD3";
 
-let kingdomVisibility = {
-  "animalia": true,
-  "plantae": true,
-  "fungi": true,
-  "chromista": true
+// Dizionario per rinominare le cause
+const LETTERE_CAUSE = {
+  "agriculture and aquaculture": "E",
+  "biological resource use": "H",
+  "climate change and severe weather": "B",
+  "energy production and mining": "F",
+  "human intrusions and disturbance": "I",
+  "invasive and other problematic species, genes and diseases": "M",
+  "natural system modifications": "L",
+  "pollution": "N",
+  "residential and commericial development": "D",
+  "transportation and service corridors": "G",
+  "geological events": "A",
+  "other/unknown": "C"
 };
+
+const NOMI_CAUSE = {
+  "agriculture and aquaculture": "Agricoltura",
+  "biological resource use": "Sfruttamento risorse",
+  "climate change and severe weather": "Cambiamento climatico",
+  "energy production and mining": "Energia e miniere",
+  "human intrusions and disturbance": "Intrusioni umane",
+  "invasive and other problematic species, genes and diseases": "Specie invasive",
+  "natural system modifications": "Modifiche naturali",
+  "pollution": "Inquinamento",
+  "residential and commericial development": "Edilizia",
+  "transportation and service corridors": "Trasporti",
+  "geological events": "Eventi geologici",
+  "other/unknown": "Altro"
+};
+
+const DESCRIZIONI_CAUSE = {
+  "agriculture and aquaculture": "L'impatto maggiore sulla biodiversità deriva dall'espansione e dell'intensificazione dell'agricoltura e acquacoltura, che interessa circa il 46,5% delle specie minacciate. Questa minaccia è guidata principalmente dalla conversione degli habitat naturali per le colture, il pascolo del bestiame e lo sviluppo dell'acquacoltura, causando una perdita di habitat su vasta scala.",
+  "biological resource use": "L'uso insostenibile delle risorse biologiche, come la raccolta eccessiva o la caccia, colpisce circa il 39,6% delle specie. La componente più significativa è il taglio e la raccolta di legname, spesso non sostenibile, seguito dalla pesca e dalla raccolta di risorse acquatiche, e dalla caccia e cattura non regolamentata di animali terrestri e piante.",
+  "climate change and severe weather": "Gli impatti dei cambiamenti climatici e delle condizioni meteorologiche estreme minacciano circa il 13,3% delle specie. Questa minaccia include lo spostamento e l'alterazione degli habitat, l'aumento delle siccità e gli estremi di temperatura e le tempeste più violente, che superano la capacità di adattamento delle specie.",
+  "energy production and mining": "La produzione di energia e l'attività mineraria minacciano circa il 13,1% delle specie. Le attività di estrazione mineraria e le cave sono la componente più impattante, causando la distruzione fisica dell'habitat, seguite dalle trivellazioni di petrolio e gas e dalle infrastrutture per le energie rinnovabili.",
+  "human intrusions and disturbance": "Questa minaccia, che incide su circa il 5,7% delle specie, si riferisce al disturbo diretto causato principalmente dalle attività ricreative non regolamentate. Altri fattori, sebbene minori, includono i conflitti (guerre e disordini civili) che destabilizzano gli ecosistemi.",
+  "invasive and other problematic species, genes and diseases": "L'introduzione di specie invasive non native, malattie e altro materiale genetico problematico minaccia circa il 14,5% delle specie. Le specie aliene invasive sono il problema predominante; possono agire come predatori, concorrenti o vettori di malattie, portando al rapido declino delle specie native.",
+  "natural system modifications": "Questa categoria rappresenta le alterazioni su larga scala degli ecosistemi, impattando circa il 22,1% delle specie. Le principali cause sono gli incendi (la cui frequenza e intensità sono spesso alterate dall'uomo) e la gestione idrica tramite la costruzione di dighe e la deviazione dei corsi d'acqua, che sconvolgono gli habitat acquatici e terrestri.",
+  "pollution": "L'inquinamento danneggia circa il 13,5% delle specie. Sebbene l'inquinamento da effluenti agricoli e forestali (come i fertilizzanti in eccesso) sia spesso la componente più diffusa, anche gli scarichi industriali, i rifiuti solidi e l'inquinamento atmosferico contribuiscono significativamente alla contaminazione degli habitat.",
+  "residential and commericial development": "L'espansione dell'urbanizzazione e delle infrastrutture umane, raggruppata nello sviluppo residenziale e commerciale, minaccia circa il 24,5% delle specie. Questa categoria include la crescita delle aree urbane, industriali e turistiche, che provoca la distruzione diretta e la frammentazione degli ecosistemi.",
+  "transportation and service corridors": "Lo sviluppo di corridoi di trasporto e servizi minaccia circa l'8,1% delle specie. Questo impatto è dominato dalla costruzione di strade e ferrovie, che oltre a distruggere l'habitat, creano barriere fisiche e aumentano la mortalità degli animali.",
+  "geological events": "Gli eventi geologici che minacciano circa l'1,1% delle specie sono perlopiù fenomeni naturali, come frane, valanghe ed eruzioni vulcaniche. Tuttavia, l'impatto sulle specie è spesso esacerbato quando gli habitat sono già stressati da altre minacce antropiche."
+};
+
+let causes = [];
+let hoveredCause = null;
+let clickedCause = null;
+let scrollY = 0; 
 
 function preload() {
-  // Assicurati che il percorso sia giusto!
-  table = loadTable('data/dataset_biodiversità - regni x aree.csv', 'csv', 'header');
+  data_aree    = loadTable("data/data_aree.csv", "csv", "header");
+  data_animali = loadTable("data/data_animali.csv", "csv", "header");
+  data_piante  = loadTable("data/data_piante.csv", "csv", "header");
+  data_funghi  = loadTable("data/data_funghi.csv", "csv", "header");
+  data_cromisti= loadTable("data/data_cromisti.csv","csv","header");
 }
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  noLoop(); 
+  textFont("Georgia");
 
-  let validZoneIndex = 0; 
-
-  // 1. CREAZIONE ZONE
-  for (let r = 0; r < table.getRowCount(); r++) {
-    let zoneName = table.getString(r, 0); 
-    
-    // Ignora la riga TOTAL
-    if (zoneName === 'TOTAL') continue; 
-
-    let total = table.getNum(r, "TOTAL");
-    let counts = {
-      "animalia": table.getNum(r, "animalia"),
-      "plantae": table.getNum(r, "plantae"),
-      "fungi": table.getNum(r, "fungi"),
-      "chromista": table.getNum(r, "chromista")
-    };
-
-    if (total > 0) {
-      // per calcolare la posizione fissa
-      zones.push(new Zone(zoneName, total, counts, validZoneIndex));
-      validZoneIndex++;
-    }
+  for (let r = 0; r < data_aree.getRowCount(); r++) {
+    let area = data_aree.getString(r, 0);
+    if (area && area.toLowerCase() !== "total") areas.push(area.toLowerCase());
   }
-
-  // 2. SIMULAZIONE FISICA ZONE
-  print("Calcolo layout...");
-  let zoneSimSteps = 2000;
-  for (let i = 0; i < zoneSimSteps; i++) {
-    for (let z of zones) {
-      z.move(); 
-      z.collide(zones);
-    }
-  }
-
-  // 3. SIMULAZIONE FISICA REGNI
-  for (let z of zones) {
-    let innerSimSteps = 1000;
-    for (let i = 0; i < innerSimSteps; i++) {
-      for (let k of z.kingdoms) {
-        k.move(z.r);
-        k.collide(z.kingdoms);
-      }
-    }
-  }
-
-  createFilters();
-}
-
-function createFilters() {
-  let startY = 20; 
-  let startX = 20; 
-  
-  // Titolo della legenda
-  let title = createDiv("FILTRA REGNI:");
-  title.position(startX, startY);
-  title.style('color', '#000000');
-  title.style('font-family', 'Arial');
-  title.style('font-size', '12px');
-  title.style('font-weight', 'bold');
-  
-  startY += 30;
-
-  // Ciclo per creare i pulsanti personalizzati
-  for (let key in colors) {
-    
-    // 1. Creo un contenitore per la riga (Cerchio + Testo)
-    let row = createDiv();
-    row.position(startX, startY);
-    row.style('display', 'flex');         // Allino cerchio e testo
-    row.style('align-items', 'center');   // Centro verticalmente
-    row.style('cursor', 'pointer');       // Cambio il cursore in "manina"
-    
-    // 2. Creo il "Pallino" (che sostituisce la checkbox)
-    let dot = createDiv();
-    dot.style('width', '14px');           // Larghezza
-    dot.style('height', '14px');          // Altezza
-    dot.style('border-radius', '50%');    // Lo rende rotondo
-    dot.style('border', `2px solid ${colors[key]}`); // Bordo sempre colorato
-    dot.style('background-color', colors[key]);      // Inizialmente PIENO (attivo)
-    dot.style('margin-right', '10px');    // Spazio tra pallino e testo
-    dot.parent(row); 
-    
-    // 3. Creo l'etichetta di testo
-    let label = createDiv(key.toUpperCase());
-    label.style('font-family', 'Arial');
-    label.style('font-size', '12px');
-    label.style('color', '#000');
-    label.parent(row); 
-
-    // 4. Gestione del Click
-    (function(k, d) {
-        row.mousePressed(() => {
-            // A. Inverto lo stato (Vero -> Falso, Falso -> Vero)
-            kingdomVisibility[k] = !kingdomVisibility[k];
-
-            // B. Aggiorno la grafica del pallino
-            if (kingdomVisibility[k]) {
-                d.style('background-color', colors[k]); 
-            } else {
-                d.style('background-color', 'transparent'); 
-            }
-
-            // C. Ridisegno il canvas
-            redraw(); 
-        });
-    })(key, dot);
-
-    startY += 25; // Spazio per la prossima riga
-  }
+  // Ottengo le colonne delle cause
+  causes = data_animali.columns.slice(1, -1);
 }
 
 function draw() {
-  background("#E1DDD3");
-  translate(width / 2, height / 2);
+  clear();
+  push();
+  translate(0, scrollY); // scroll del contenuto
 
-  for (let z of zones) {
-    z.show();
-  }
+  fill(0);
+  textAlign(RIGHT, TOP);
+  textSize(28);
+  text("Cause di rischio estinzione — " + toTitleCase(selectedArea), width - 50, 70);
+
+
+  drawKingdomFlowers();
+
+  // Se c'è un click, overlay 
+  if (clickedCause) drawOverlay(clickedCause);
+
+  pop(); // Fine dello scroll
+    
+  drawDropdownMenu();
+  drawTooltip();
 }
 
-class Zone {
-  constructor(name, total, counts, index) {
-    this.name = name;
-    
-    // Invece di random, uso una Spirale di Archimede basata sull'indice
-    // Ogni zona avrà una posizione di partenza FISSA unica
-    let angle = index * 2.0; // Angolo aumenta progressivamente
-    let distance = 50 + (index * 15); // Distanza aumenta progressivamente
-    this.pos = createVector(cos(angle) * distance, sin(angle) * distance);
-    
-    this.r = sqrt(total) * scaleFactor * 1.75; 
-    this.kingdoms = [];
-    
-    // Creazione sottogruppi
-    for (let key in counts) {
-      let val = counts[key];
-      if (val > 0) {
-        this.kingdoms.push(new Kingdom(key, val));
-      }
+function drawKingdomFlowers() {
+  let kingdoms = ["Animalia", "Plantae", "Fungi", "Chromista"];
+  
+  let gapX = 800;               
+  
+  let topPairX = 300;  
+  let topPairY = 300;  
+  let bottomPairX = 700; 
+  let bottomPairY = 650; 
+  
+  let centerRadius = 20;        
+  let angleStep = TWO_PI / causes.length;
+
+  // 2. CALCOLO SPAZIO DISPONIBILE MIGLIORATO
+  // Invece di guardare solo la verticale, calcoliamo la distanza reale (diagonale)
+  // tra i fiori più vicini delle due righe: Plantae (alto-dx) e Fungi (basso-sx).
+  
+  // Plantae è a (topPairX + gapX, topPairY)
+  // Fungi è a (bottomPairX, bottomPairY)
+  let plantaeX = topPairX + gapX;
+  let fungiX = bottomPairX;
+  
+  // Distanza Euclidea (Pitagora)
+  let distDiag = dist(plantaeX, topPairY, fungiX, bottomPairY);
+  
+  // Il nuovo raggio massimo è metà della diagonale (con un po' di margine)
+  // Questo permette ai fiori di essere MOLTO più grandi (circa 240px invece di 185px)
+  let maxPossibleRadius = distDiag / 2 - 15; 
+  let maxPetalLengthLimit = maxPossibleRadius - centerRadius;
+
+  // 3. MANTENIAMO I PETALI SOTTILI
+  let minPetalMidRadius = centerRadius + 60; 
+  let availableArc = (minPetalMidRadius * TWO_PI) / causes.length;
+  // Teniamo il limite larghezza a 50px (o anche meno) per non farli ingrassare
+  let dynamicPetalWidth = min(65, availableArc * 0.95);
+
+  for (let k = 0; k < kingdoms.length; k++) {
+    let regno = kingdoms[k];
+    let dataset = getDatasetByKingdom(regno);
+    let row = getRowByArea(dataset, selectedArea);
+    if (!row) continue;
+
+    let col = k % 2; 
+    let rowIdx = floor(k / 2);
+
+    let startX, startY;
+    if (rowIdx === 0) {
+        startX = topPairX;
+        startY = topPairY;
+    } else {
+        startX = bottomPairX;
+        startY = bottomPairY;
     }
-  }
+    
+    let centerX = startX + col * gapX;
+    let centerY = startY;
 
-  move() {
-    let center = createVector(0, 0);
-    let attraction = p5.Vector.sub(center, this.pos);
-    attraction.setMag(0.5); 
-    this.pos.add(attraction);
-  }
+    let baseColor = color(COLORS[regno]);
 
-  collide(others) {
-    for (let other of others) {
-      if (other !== this) {
-        let d = this.pos ? this.pos.dist(other.pos) : this.relPos.dist(other.relPos); 
-        let minDist = this.r + other.r + 35; 
-        
-        if (d < minDist) {
-          let overlap = minDist - d;
-          
-          // Trovo la direzione per scappare via dall'altro cerchio
-          let vec;
-          if (this.pos) {
-             vec = p5.Vector.sub(this.pos, other.pos); 
-          } else {
-             vec = p5.Vector.sub(this.relPos, other.relPos); 
-          }
-          if (vec.mag() === 0) vec = p5.Vector.random2D();
-          
-          // Mi sposto esattamente della metà della sovrapposizione
-          vec.setMag(overlap * 0.5); 
-          
-          if (this.pos) this.pos.add(vec);
-          else this.relPos.add(vec);
-        }
-      }
+    let maxValInRow = 0;
+    for (let c of causes) {
+       let val = int(row.get(c));
+       if(val > maxValInRow) maxValInRow = val;
     }
-  }
+    if (maxValInRow === 0) maxValInRow = 1; 
 
-show() {
-    // 1. Disegno cerchio esterno (Zona)
-    noStroke(); 
-    fill("#F2F0E5"); 
-    circle(this.pos.x, this.pos.y, this.r * 2);
+    push();
+    translate(centerX, centerY); 
 
-    // 2. Disegno testo curvo
-    noStroke();
-    fill("#000000");
-    textAlign(CENTER, CENTER);
-    textSize(12);
-    textStyle(BOLD);
-
-    let label = this.name.toUpperCase();
-    let textRadius = this.r + 18; 
-    
-    let totalAngle = textWidth(label) / textRadius;
-    
-    // Parto da Sinistra per andare a Destra 
-    let currentAngle = HALF_PI + (totalAngle / 2);
-
-    for (let i = 0; i < label.length; i++) {
-      let char = label.charAt(i);
-      let w = textWidth(char);
+    for (let i = 0; i < causes.length; i++) {
+      let causa = causes[i];
+      let val = int(row.get(causa));
       
-      let charAngle = w / textRadius;
+      if (val === 0) continue; 
       
-      // Sottraggo metà dell'angolo per trovare il centro della lettera
-      let theta = currentAngle - charAngle / 2;
-      
-      let x = this.pos.x + cos(theta) * textRadius;
-      let y = this.pos.y + sin(theta) * textRadius;
+      let petalLength = map(val, 0, maxValInRow, 100, maxPetalLengthLimit);
+      let angle = i * angleStep - HALF_PI; 
 
       push();
-      translate(x, y);
-      rotate(theta - HALF_PI); 
-      text(char, 0, 0);
-      pop();
+      rotate(angle);
+      
+      let isActive = (hoveredCause && hoveredCause.cause === causa);
+      let isSpecificHover = (isActive && hoveredCause.kingdom === regno);
 
-      // Mi sposto indietro (verso destra) per la prossima lettera
-      currentAngle -= charAngle;
+      if (isActive) {
+        fill(baseColor);
+        noStroke(); 
+      } else if (hoveredCause) {
+        let c = color(COLORS[regno]);
+        c.setAlpha(50);
+        fill(c);
+        noStroke();
+      } else {
+        let c = color(COLORS[regno]);
+        c.setAlpha(180);
+        fill(c);
+        noStroke();
+      }
+
+      ellipse(0, centerRadius + petalLength / 2, dynamicPetalWidth, petalLength);
+
+      // --- ETICHETTE RAVVICINATE ---
+      push();
+      
+      // 1. Distanza Base ridotta al minimo 
+      let baseDist = centerRadius + petalLength + 15;
+
+      // Calcoliamo la distanza dalla punta del petalo
+      // Aggiungiamo un margine extra (10px) per sicurezza
+      let textDist = centerRadius + petalLength + 10;
+      
+      
+      // 2. Sfalsamento più compatto (0px o 9px)
+      let stagger = (i % 2 === 0) ? 0 : 12;
+      textDist += stagger;
+      
+      translate(0, baseDist + stagger); 
+      rotate(-angle); 
+      
+      fill(0);
+      textSize(16); 
+      
+      if (isSpecificHover) textStyle(BOLD); 
+      else textStyle(NORMAL);
+      
+      let cVal = cos(angle);
+      // 3. Padding orizzontale ridotto
+      let labelPadding = 5; 
+
+      if (cVal > 0.1) {
+          textAlign(CENTER, CENTER);
+          translate(labelPadding, 0); 
+      } else if (cVal < -0.1) {
+          textAlign(CENTER, CENTER);
+          translate(-labelPadding, 0); 
+      } else {
+          textAlign(CENTER, CENTER);
+          // Piccolo aggiustamento verticale per i casi limite (sopra/sotto)
+          if (sin(angle) > 0) translate(0, 3);
+          else translate(0, -3);
+      }
+      
+      let etichetta = LETTERE_CAUSE[causa] || causa; 
+      text(etichetta, 0, 0);
+      
+      pop(); 
+
+      fill(baseColor); 
+      noStroke();      
+      ellipse(0, 0, centerRadius * 2, centerRadius * 2); 
+      pop();
     }
 
-    // 3. Disegno i cerchi interni (Regni) 
-    for (let k of this.kingdoms) {
-      let absX = this.pos.x + k.relPos.x;
-      let absY = this.pos.y + k.relPos.y;
-      k.show(absX, absY);
+    fill(baseColor); 
+    noStroke();      
+    ellipse(0, 0, centerRadius * 2, centerRadius * 2); 
+
+    pop(); 
+  }
+}
+
+function mouseMoved() {
+  hoveredCause = null;
+
+  let kingdoms = ["Animalia", "Plantae", "Fungi", "Chromista"];
+
+  let gapX = 800;               
+  let topPairX = 300;  
+  let topPairY = 300;  
+  let bottomPairX = 700; 
+  let bottomPairY = 650; 
+  
+  let centerRadius = 20;        
+  let angleStep = TWO_PI / causes.length;
+  
+  // Calcolo Raggio 
+  let plantaeX = topPairX + gapX;
+  let fungiX = bottomPairX;
+  let distDiag = dist(plantaeX, topPairY, fungiX, bottomPairY);
+  let maxPossibleRadius = distDiag / 2 - 15; 
+  let maxPetalLengthLimit = maxPossibleRadius - centerRadius;
+
+  let minPetalMidRadius = centerRadius + 60; 
+  let availableArc = (minPetalMidRadius * TWO_PI) / causes.length;
+  let dynamicPetalWidth = min(65, availableArc * 0.95);
+
+  let mx = mouseX;
+  let my = mouseY - scrollY;
+
+  for (let k = 0; k < kingdoms.length; k++) {
+    let regno = kingdoms[k];
+    let col = k % 2; 
+    let rowIdx = floor(k / 2);
+
+    let startX, startY;
+    if (rowIdx === 0) {
+        startX = topPairX;
+        startY = topPairY;
+    } else {
+        startX = bottomPairX;
+        startY = bottomPairY;
+    }
+    
+    let centerX = startX + col * gapX;
+    let centerY = startY;
+
+    let distFromFlowerCenter = dist(mx, my, centerX, centerY);
+    if (distFromFlowerCenter > maxPossibleRadius + 100) continue; 
+
+    let dataset = getDatasetByKingdom(regno);
+    let row = getRowByArea(dataset, selectedArea);
+    if (!row) continue;
+
+    let maxValInRow = 0;
+    for (let c of causes) {
+       let val = int(row.get(c));
+       if(val > maxValInRow) maxValInRow = val;
+    }
+    if(maxValInRow === 0) maxValInRow = 1;
+
+    for (let i = 0; i < causes.length; i++) {
+       let causa = causes[i];
+       let val = int(row.get(causa));
+       if (val === 0) continue; 
+
+       let petalLength = map(val, 0, maxValInRow, 100, maxPetalLengthLimit);
+       let petalAngle = i * angleStep - HALF_PI;
+
+       let dx = mx - centerX;
+       let dy = my - centerY;
+
+       let localX = dx * cos(-petalAngle) - dy * sin(-petalAngle);
+       let localY = dx * sin(-petalAngle) + dy * cos(-petalAngle);
+
+       let ellipseCenterX = 0;
+       let ellipseCenterY = centerRadius + petalLength / 2;
+       let radiusX = dynamicPetalWidth / 2; 
+       let radiusY = petalLength / 2;
+
+       let part1 = sq(localX - ellipseCenterX) / sq(radiusX);
+       let part2 = sq(localY - ellipseCenterY) / sq(radiusY);
+
+       if (part1 + part2 <= 1) {
+         hoveredCause = { kingdom: regno, cause: causa, value: val };
+         return; 
+       }
     }
   }
 }
 
-// --- CLASSE REGNO ---
-class Kingdom {
-  constructor(type, value) {
-    this.type = type;
-    this.value = value;
-    this.r = sqrt(value) * scaleFactor;
-    
-    // Posizione iniziale fissa in base al tipo (Nord, Sud, Est, Ovest)
-    // Così non usiamo random nemmeno qui
-    let offset = 10;
-    if (type === 'animalia') this.relPos = createVector(-offset, -offset); // Nord-Ovest
-    else if (type === 'plantae') this.relPos = createVector(offset, -offset); // Nord-Est
-    else if (type === 'fungi') this.relPos = createVector(-offset, offset);   // Sud-Ovest
-    else this.relPos = createVector(offset, offset);                          // Sud-Est (chromista)
-    // -------------------------------
+function mouseWheel(event) {
+  scrollY -= event.delta; 
+}
+
+function mousePressed() {
+  // Gestione click menu
+  if (mouseX > 20 && mouseX < 240 && mouseY > 20 && mouseY < 56) {
+    menuOpen = !menuOpen;
+    return;
   }
-
-  move(zoneRadius) {
-    let centerPush = this.relPos.copy().setMag(0.1);
-    this.relPos.add(centerPush);
-
-    let d = this.relPos.mag();
-    let maxDist = zoneRadius - this.r - 2; 
-    
-    if (d > maxDist && maxDist > 0) {
-      this.relPos.setMag(maxDist); 
-    }
-  }
-
-  collide(others) {
-    for (let other of others) {
-      if (other !== this) {
-        let d = this.pos ? this.pos.dist(other.pos) : this.relPos.dist(other.relPos); 
-        let minDist = this.r + other.r + 3; 
-        
-        if (d < minDist) {
-          // Calcolo l'ESATTA sovrapposizione
-          let overlap = minDist - d;
-          
-          // Trovo la direzione per scappare via dall'altro cerchio
-          let vec;
-          if (this.pos) {
-             vec = p5.Vector.sub(this.pos, other.pos); 
-          } else {
-             vec = p5.Vector.sub(this.relPos, other.relPos); 
-          }
-          if (vec.mag() === 0) vec = p5.Vector.random2D();
-          
-          // Mi sposto esattamente della metà della sovrapposizione
-          vec.setMag(overlap * 0.5); 
-          
-          if (this.pos) this.pos.add(vec);
-          else this.relPos.add(vec);
-        }
+  if (menuOpen) {
+    for (let i = 0; i < areas.length; i++) {
+      let iy = 56 + i * 32;
+      if (mouseX > 20 && mouseX < 240 && mouseY > iy && mouseY < iy + 32) {
+        selectedArea = areas[i];
+        menuOpen = false;
+        return;
       }
     }
   }
-
-  show(x, y) {
-    if (kingdomVisibility[this.type] === false) return;
-    fill(colors[this.type]);
-    noStroke();
-    circle(x, y, this.r * 2);
+  
+  // Gestione click petalo
+  if (hoveredCause) {
+    clickedCause = hoveredCause.cause; // Salviamo solo il nome della causa per l'overlay
   }
 }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  // Nota: se ridimensioni ora ridisegnerà la spirale iniziale,
-  // ma manterrà la stessa logica coerente.
+function drawDropdownMenu() {
+  // Calcolo la posizione basandomi sulla larghezza dello schermo
+  let menuW = 220;
+  let menuX = width - 50 - menuW; // Allineato a destra come il titolo (margine 50)
+  let menuY = 120; // Sotto il titolo
+  
+  fill(BG);
+  noStroke();
+  // Rettangolo principale
+  rect(menuX, menuY, menuW, 36, 6);
+  
+  fill(0);
+  textSize(14);
+  textAlign(LEFT, CENTER);
+  text(toTitleCase(selectedArea), menuX + 12, menuY + 18);
+
+  textAlign(RIGHT, CENTER);
+  text(menuOpen ? "▴" : "▾", menuX + 210, menuY + 18);
+
+  if (menuOpen) {
+    for (let i = 0; i < areas.length; i++) {
+      let iy = menuY + 36 + i * 32;
+      
+      fill("#D6D2C8");
+      rect(menuX, iy, menuW, 32, 6);
+      
+      fill(0);
+      textAlign(LEFT, CENTER);
+      text(toTitleCase(areas[i]), menuX + 12, iy + 16);
+    }
+  }
+}
+
+function drawOverlay(causeKey) {
+  fill(0, 150);
+  rect(0, 0, width, height);
+
+  push();
+  translate(0, -scrollY); 
+
+  fill(255);
+  rect(width/2 - 250, height/2 - 150, 500, 300, 10);
+
+  // Recupera il nome leggibile e la descrizione
+  let titolo = NOMI_CAUSE[causeKey] || causeKey;
+  let descrizione = DESCRIZIONI_CAUSE[causeKey] || "Descrizione non disponibile per questa causa.";
+
+  fill(0);
+  textAlign(CENTER, TOP);
+  
+  // Titolo
+  textSize(22);
+  textStyle(BOLD);
+  text(titolo, width/2, height/2 - 110);
+
+  // Descrizione (con word wrapping per andare a capo)
+  textSize(16);
+  textStyle(NORMAL);
+  textWrap(WORD); // Importante per far andare a capo il testo
+  
+  // Disegna il testo dentro un rettangolo immaginario largo 400px
+  text(descrizione, width/2 - 200, height/2 - 60, 400);
+
+  // Bottone Chiudi
+  fill("#EDEDED");
+  rect(width/2 - 40, height/2 + 80, 80, 30, 5);
+  fill(0);
+  textSize(14);
+  textAlign(CENTER, CENTER);
+  text("Chiudi", width/2, height/2 + 95);
+
+  pop();
+}
+
+function mousePressed() {
+  // --- PRIORITÀ 1: GESTIONE POPUP (Overlay) ---
+  if (clickedCause) {
+    // Coordinate del bottone "Chiudi" (identiche a quelle usate in drawOverlay)
+    // width/2 - 40, height/2 + 80, larghezza 80, altezza 30
+    if (mouseX > width/2 - 40 && mouseX < width/2 + 40 &&
+        mouseY > height/2 + 80 && mouseY < height/2 + 110) {
+      clickedCause = null; // Chiudi il popup
+    }
+    // IMPORTANTE: Se il popup è aperto, blocchiamo qualsiasi altro click (fiori o menu)
+    return; 
+  }
+
+  // --- PRIORITÀ 2: GESTIONE MENU ---
+  // Testata del menu
+  let menuW = 220;
+  let menuX = width - 50 - menuW; 
+  let menuY = 120; 
+
+  if (mouseX > menuX && mouseX < menuX + menuW && mouseY > menuY && mouseY < menuY + 36) {
+    menuOpen = !menuOpen;
+    return;
+  }
+
+  // Voci del menu (se aperto)
+  if (menuOpen) {
+    for (let i = 0; i < areas.length; i++) {
+      let iy = menuY + 36 + i * 32;
+      if (mouseX > menuX && mouseX < menuX + menuW && mouseY > iy && mouseY < iy + 32) {
+        selectedArea = areas[i];
+        menuOpen = false;
+        return;
+      }
+    }
+  }
+  
+  // --- PRIORITÀ 3: GESTIONE FIORI ---
+  // Solo se non abbiamo cliccato nient'altro sopra
+  if (hoveredCause) {
+    clickedCause = hoveredCause.cause; 
+  }
+}
+
+function getDatasetByKingdom(regno) {
+    if (regno === "Animalia") return data_animali;
+    if (regno === "Plantae")  return data_piante;
+    if (regno === "Fungi")    return data_funghi;
+    if (regno === "Chromista")return data_cromisti;
+    return null;
+}
+  
+function getRowByArea(table, areaLower) {
+  for (let r = 0; r < table.getRowCount(); r++) {
+    let name = table.getString(r, 0);
+    if (!name) continue;
+    if (name.trim().toLowerCase() === areaLower.trim().toLowerCase()) {
+      return table.getRow(r);
+    }
+  }
+  return null;
+}
+  
+function toTitleCase(s) {
+  return String(s)
+    .toLowerCase()
+    .replace(/\b\w/g, ch => ch.toUpperCase());
+}
+
+function drawTooltip() {
+  if (hoveredCause) {
+    let lettera = LETTERE_CAUSE[hoveredCause.cause] || "";
+    let nomeEsteso = NOMI_CAUSE[hoveredCause.cause] || hoveredCause.cause;
+    let txt = lettera + " - " + nomeEsteso + ": " + hoveredCause.value + " specie";
+    
+    textSize(14);
+    let w = textWidth(txt) + 20;
+    let h = 30;
+    
+    // Coordinate vicino al mouse
+    let x = mouseX + 15;
+    let y = mouseY + 15;
+    
+    // Evito che esca dallo schermo
+    if (x + w > width) x = mouseX - w - 10;
+    if (y + h > height) y = mouseY - h - 10;
+    
+    // Rettangolo sfondo
+    fill(255);
+    stroke(0);
+    strokeWeight(1);
+    rect(x, y, w, h, 5); // 5 raggio angoli arrotondati
+    
+    // Testo
+    noStroke();
+    fill(0);
+    textAlign(LEFT, CENTER);
+    text(txt, x + 10, y + h/2);
+  }
 }
