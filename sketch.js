@@ -60,7 +60,6 @@ const DESCRIZIONI_CAUSE = {
 let causes = [];
 let hoveredCause = null;
 let clickedCause = null;
-let scrollY = 0; 
 
 function preload() {
   data_aree    = loadTable("data/data_aree.csv", "csv", "header");
@@ -84,9 +83,6 @@ function setup() {
 
 function draw() {
   clear();
-  push();
-  translate(0, scrollY); // scroll del contenuto
-
   fill(0);
   textAlign(RIGHT, TOP);
   textSize(28);
@@ -97,47 +93,54 @@ function draw() {
 
   // Se c'è un click, overlay 
   if (clickedCause) drawOverlay(clickedCause);
-
-  pop(); // Fine dello scroll
     
   drawDropdownMenu();
   drawTooltip();
 }
 
+/* --- FUNZIONE DRAW CON CENTRATURA AUTOMATICA --- */
 function drawKingdomFlowers() {
   let kingdoms = ["Animalia", "Plantae", "Fungi", "Chromista"];
   
-  let gapX = 800;               
+  // 1. TUE COORDINATE FISSE ORIGINALI (Non le cambiamo)
+  let origGapX = 800;
+  let origTopX = 300;
+  let origTopY = 300;
+  let origBottomX = 700;
+  let origBottomY = 650;
+
+  // 2. CALCOLO DEL CENTRO DEL TUO GRUPPO FISSO
+  // Il punto medio orizzontale tra il fiore più a sinistra (300) e quello più a destra (700+800=1500)
+  let fixedCenterX = (origTopX + (origBottomX + origGapX)) / 2; // (300 + 1500)/2 = 900
+  // Il punto medio verticale tra la riga alta (300) e la riga bassa (650)
+  let fixedCenterY = (origTopY + origBottomY) / 2; // (300 + 650)/2 = 475
   
-  let topPairX = 300;  
-  let topPairY = 300;  
-  let bottomPairX = 700; 
-  let bottomPairY = 650; 
+  // 3. CALCOLO DELL'OFFSET NECESSARIO PER CENTRARE NELLO SCHERMO
+  // Quanto devo spostarmi per far coincidere il centro fisso (900,475) con il centro schermo (width/2, height/2)?
+  let offsetX = (width / 2) - fixedCenterX;
+  let offsetY = (height / 2) - fixedCenterY;
+
+  // 4. APPLICAZIONE DELL'OFFSET ALLE COORDINATE DI BASE
+  // Queste sono le nuove variabili che useremo nel resto della funzione
+  let gapX = origGapX;
+  let topPairX = origTopX + offsetX;
+  let topPairY = origTopY + offsetY;
+  let bottomPairX = origBottomX + offsetX;
+  let bottomPairY = origBottomY + offsetY;
   
+  // --- DA QUI IN POI IL CODICE È IDENTICO AL TUO ---
   let centerRadius = 20;        
   let angleStep = TWO_PI / causes.length;
 
-  // 2. CALCOLO SPAZIO DISPONIBILE MIGLIORATO
-  // Invece di guardare solo la verticale, calcoliamo la distanza reale (diagonale)
-  // tra i fiori più vicini delle due righe: Plantae (alto-dx) e Fungi (basso-sx).
-  
-  // Plantae è a (topPairX + gapX, topPairY)
-  // Fungi è a (bottomPairX, bottomPairY)
   let plantaeX = topPairX + gapX;
   let fungiX = bottomPairX;
-  
-  // Distanza Euclidea (Pitagora)
   let distDiag = dist(plantaeX, topPairY, fungiX, bottomPairY);
   
-  // Il nuovo raggio massimo è metà della diagonale (con un po' di margine)
-  // Questo permette ai fiori di essere MOLTO più grandi (circa 240px invece di 185px)
   let maxPossibleRadius = distDiag / 2 - 15; 
   let maxPetalLengthLimit = maxPossibleRadius - centerRadius;
 
-  // 3. MANTENIAMO I PETALI SOTTILI
   let minPetalMidRadius = centerRadius + 60; 
   let availableArc = (minPetalMidRadius * TWO_PI) / causes.length;
-  // Teniamo il limite larghezza a 50px (o anche meno) per non farli ingrassare
   let dynamicPetalWidth = min(65, availableArc * 0.95);
 
   for (let k = 0; k < kingdoms.length; k++) {
@@ -160,6 +163,8 @@ function drawKingdomFlowers() {
     
     let centerX = startX + col * gapX;
     let centerY = startY;
+    
+    // (Ho rimosso il blocco del gambo che avevo aggiunto per errore)
 
     let baseColor = color(COLORS[regno]);
 
@@ -205,18 +210,10 @@ function drawKingdomFlowers() {
 
       ellipse(0, centerRadius + petalLength / 2, dynamicPetalWidth, petalLength);
 
-      // --- ETICHETTE RAVVICINATE ---
       push();
       
-      // 1. Distanza Base ridotta al minimo 
       let baseDist = centerRadius + petalLength + 15;
-
-      // Calcoliamo la distanza dalla punta del petalo
-      // Aggiungiamo un margine extra (10px) per sicurezza
       let textDist = centerRadius + petalLength + 10;
-      
-      
-      // 2. Sfalsamento più compatto (0px o 9px)
       let stagger = (i % 2 === 0) ? 0 : 12;
       textDist += stagger;
       
@@ -230,7 +227,6 @@ function drawKingdomFlowers() {
       else textStyle(NORMAL);
       
       let cVal = cos(angle);
-      // 3. Padding orizzontale ridotto
       let labelPadding = 5; 
 
       if (cVal > 0.1) {
@@ -241,7 +237,6 @@ function drawKingdomFlowers() {
           translate(-labelPadding, 0); 
       } else {
           textAlign(CENTER, CENTER);
-          // Piccolo aggiustamento verticale per i casi limite (sopra/sotto)
           if (sin(angle) > 0) translate(0, 3);
           else translate(0, -3);
       }
@@ -250,10 +245,6 @@ function drawKingdomFlowers() {
       text(etichetta, 0, 0);
       
       pop(); 
-
-      fill(baseColor); 
-      noStroke();      
-      ellipse(0, 0, centerRadius * 2, centerRadius * 2); 
       pop();
     }
 
@@ -265,21 +256,36 @@ function drawKingdomFlowers() {
   }
 }
 
+
+/* --- FUNZIONE MOUSE CON LA STESSA LOGICA DI CENTRATURA --- */
 function mouseMoved() {
   hoveredCause = null;
 
   let kingdoms = ["Animalia", "Plantae", "Fungi", "Chromista"];
 
-  let gapX = 800;               
-  let topPairX = 300;  
-  let topPairY = 300;  
-  let bottomPairX = 700; 
-  let bottomPairY = 650; 
+  // --- APPLICHIAMO LO STESSO IDENTICO CALCOLO DI DRAW ---
+  let origGapX = 800;
+  let origTopX = 300;
+  let origTopY = 300;
+  let origBottomX = 700;
+  let origBottomY = 650;
+
+  let fixedCenterX = (origTopX + (origBottomX + origGapX)) / 2; 
+  let fixedCenterY = (origTopY + origBottomY) / 2; 
+  
+  let offsetX = (width / 2) - fixedCenterX;
+  let offsetY = (height / 2) - fixedCenterY;
+
+  let gapX = origGapX;
+  let topPairX = origTopX + offsetX;
+  let topPairY = origTopY + offsetY;
+  let bottomPairX = origBottomX + offsetX;
+  let bottomPairY = origBottomY + offsetY;
+  // ----------------------------------------------------
   
   let centerRadius = 20;        
   let angleStep = TWO_PI / causes.length;
   
-  // Calcolo Raggio 
   let plantaeX = topPairX + gapX;
   let fungiX = bottomPairX;
   let distDiag = dist(plantaeX, topPairY, fungiX, bottomPairY);
@@ -291,7 +297,7 @@ function mouseMoved() {
   let dynamicPetalWidth = min(65, availableArc * 0.95);
 
   let mx = mouseX;
-  let my = mouseY - scrollY;
+  let my = mouseY;
 
   for (let k = 0; k < kingdoms.length; k++) {
     let regno = kingdoms[k];
@@ -310,8 +316,7 @@ function mouseMoved() {
     let centerX = startX + col * gapX;
     let centerY = startY;
 
-    let distFromFlowerCenter = dist(mx, my, centerX, centerY);
-    if (distFromFlowerCenter > maxPossibleRadius + 100) continue; 
+    if (dist(mx, my, centerX, centerY) > maxPossibleRadius + 100) continue; 
 
     let dataset = getDatasetByKingdom(regno);
     let row = getRowByArea(dataset, selectedArea);
@@ -352,10 +357,6 @@ function mouseMoved() {
        }
     }
   }
-}
-
-function mouseWheel(event) {
-  scrollY -= event.delta; 
 }
 
 function mousePressed() {
@@ -419,7 +420,6 @@ function drawOverlay(causeKey) {
   rect(0, 0, width, height);
 
   push();
-  translate(0, -scrollY); 
 
   fill(255);
   rect(width/2 - 250, height/2 - 150, 500, 300, 10);
@@ -553,4 +553,8 @@ function drawTooltip() {
     textAlign(LEFT, CENTER);
     text(txt, x + 10, y + h/2);
   }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
