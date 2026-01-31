@@ -1,45 +1,94 @@
 <!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://use.typekit.net/vgz5wxm.css">
+  
+  <link rel="stylesheet" href="Style.css"> 
+  
+  <title>About Us — Team</title>
 
-    <title>Visione dettaglio 2</title>
-
-    <link rel="stylesheet"  href="style.css">
-    
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-        canvas {
-            display: block;
-        }
-    </style>
-
-    <script src="libraries/p5.min.js"></script>
-    <script src="libraries/p5.sound.min.js"></script>
-  </head>
-
-  <body>
-    <a href="index.html" class="back-btn" aria-label="Torna indietro">
-    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
-    </svg>
-  </a>
-    <script src="sketch.js"></script>
-     <nav class="navbar" role="navigation">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  
+  <nav class="navbar" role="navigation">
     <div class="nav-container">
       <ul class="nav-list">
-        <li class="nav-item"><a href="#">Home</a></li>
+        <li class="nav-item"><a href="../visione_insieme/index.html">Home</a></li>
+        <li class="nav-item"><a href="../index.html">Intro</a></li>
         <li class="nav-item"><a href="index.html">About us</a></li>
         <li class="nav-item"><a href="dataset.html">Dataset</a></li>
       </ul>
     </div>
   </nav>
+
   <main class="container" aria-labelledby="title">
-    </main>
-    <div class="bottom-decoration-container"></div>
-  </body>
+    <header>
+      <h1 id="title">Chi siamo?</h1>
+      <p>Siamo un team di aspiranti designer della comunicazione del Politecnico di Milano <br>
+         e il sito che vedete è il prodotto di un corso del nostro secondo anno: <br>
+         il laboratorio di Computergrafica per l'Information design. 
+         <br> Ci auguriamo che il sito vi piaccia, e soprattutto che vi possa essere utile &lt;3 </p>
+    </header>
+
+      <section class="rows" aria-label="Team members">
+      <div class="team-grid" id="team-container" role="list"></div>
+
+    </section>
+  </main>
+
+  <script src="sketch.js"></script>
+
+  <footer class="site-footer">
+  <div class="footer-container">
+    
+    <div class="footer-section">
+      <img src="variante B 03 N.svg" alt="Logo Politecnico di Milano" class="footer-logo">
+      <h3>Laboratorio di Computer Grafica per l'Information Design</h3>
+      <p>A.A. 2025/2026</p>
+      <p class="credits"><a href="https://www.designdellacomunicazione.polimi.it/" target="_blank">Laurea Triennale in Design della Comunicazione</a></p>
+
+    </div>
+
+    <div class="footer-section">
+      <p class="italic">Progetto a cura di</p>
+      <p>Anazco Riofrio Emly Noelia<br>
+        De Marco Ludovica<br>
+        Ditaranto Rebecca<br>
+        Lena Isabella<br>
+        López Rabasseda Aroa<br>
+        Polistena Alessandro<br>
+        Travagnin Federica</p>
+      <img src="densitydesign N.svg" alt="Logo DensityDesign" class="footer-logo2">
+        
+    </div>
+
+    <div class="footer-section">
+      <p class="italic">Docenti</p>
+      <p>Michele Mauri</p>
+      <p>Davide Conficconi</p>
+      <p class="italic">Cultori della Materia</p>
+      <p>Alessandra Facchin</p>
+      <p>Alessandro Nazzari</p>
+      
+      <p class="credits">Built with <a href="https://p5js.org/" target="_blank">p5.js</a></p>
+
+      <img src="NECST_N.svg" alt="Logo DensityDesign" class="footer-logo2">
+    </div>
+
+    <div class="footer-section">
+
+      © CC-BY 4.0  Anazco Riofrio, De Marco, Ditaranto, Lena, López Rabasseda, Polistena, Travagnin.
+
+        <br>Salvo diversa indicazione, tutti i contenuti di questo sito web sono concessi in licenza 
+        Creative Commons Attribution 4.0 International (CC BY 4.0). 
+        Sei libero di condividere e adattare il materiale, anche per scopi commerciali, 
+        a condizione di menzionare i creatori come autori originali dell’opera. 
+    </div>
+
+  </div>
+</footer>
+</body>
 </html>
