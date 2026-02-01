@@ -1,25 +1,25 @@
 // 1. DATI DEL TEAM 
 const team = [
   { name: "Federica", role: "Illustratrice Programmatrice", 
-    description:"Fate, boschi, animaletti, musica folk... questo sito è per lei.", image: "fede.jpg", color: "#c19e7f" },
+    description:"Fate, boschi, animaletti, musica folk... questo sito è per lei.", image: "fede.png", color: "#c19e7f" },
   
   { name: "Emily", role: "Content writer Organizzazione dati", 
-    description:"Fa sempre 200 mila cose ma in qualche modo è sempre sul pezzo, slay", image: "emily.jpg", color: "#7f9cb0" },
+    description:"Fa sempre 200 mila cose ma in qualche modo è sempre sul pezzo, slay", image: "emily.png", color: "#7f9cb0" },
 
   { name: "Alessandro", role: "Organizzazione contenuti Programmatore", 
-    description:"Creatore di meme del gruppo, ride sempre e a caso. È impossibile arrabbiarsi con lui.", image: "ale.jpg", color: "#b7ab5a" },
+    description:"Creatore di meme del gruppo, ride sempre e a caso. È impossibile arrabbiarsi con lui.", image: "ale.png", color: "#b7ab5a" },
 
   { name: "Rebecca", role: "Ricerca database Programmatrice", 
-    description:"'Ma come ti permetti?!?!' core. Super cute ma ha il cuore da dark princess.", image: "rebbi.jpg", color: "#b87e8f" },
+    description:"'Ma come ti permetti?!?!' core. Super cute ma ha il cuore da dark princess.", image: "rebbi.png", color: "#b87e8f" },
   
   { name: "Isabella", role: "Programmatrice", 
-    description:"Un po' biscotti alla cannella, un po' trap. La + swag.", image: "isi.jpg", color: "#71a568" },
+    description:"Un po' biscotti alla cannella, un po' trap. La + swag.", image: "isi.png", color: "#71a568" },
   
   { name: "Aroa", role: "Prototipi Figma", 
-    description:"La nostra componente spagnola. Non si sa come ma capisce sempre tutto quello che diciamo.", image: "aroa.jpg", color: "#a182a8" },
+    description:"La nostra componente spagnola. Non si sa come ma capisce sempre tutto quello che diciamo.", image: "aroa.png", color: "#a182a8" },
   
   { name: "Ludovica", role: "Ricerca idee grafiche Programmatrice", 
-    description:"da inserire", image: "ludo.jpg", color: "#6889b1" }
+    description:"da inserire", image: "ludo.png", color: "#6889b1" }
 ];
 
 //  2. CREAZIONE CARD 
@@ -32,7 +32,7 @@ function createCard(member, index) {
   
   card.id = `card-${index}`;
 
-  // -- Meta (Testo) --
+  // Meta (Testo)
   const meta = document.createElement("div");
   meta.className = "meta";
 
@@ -52,7 +52,7 @@ function createCard(member, index) {
   meta.appendChild(role);
   meta.appendChild(description);
 
-  // -- Media (Immagine) --
+  // Media (Immagine)
   const media = document.createElement("div");
   media.className = "media";
 
@@ -76,10 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.getElementById("team-container");
 
     if(container) {
-        // Pulisco il container per sicurezza
+        // Puliamo il container per sicurezza
         container.innerHTML = "";
         
-        // Creo e appendo tutte le card in un unico ciclo
+        // Criamo e appendiamo tutte le card in un unico ciclo
         team.forEach((member, index) => {
             const card = createCard(member, index);
             container.appendChild(card);
@@ -93,20 +93,19 @@ document.addEventListener("DOMContentLoaded", () => {
 //  3. P5.JS & P5.BRUSH (Generazione Texture Sfondi) 
 
 function setup() {
-  // Uso il renderer 2D di default 
-  let cnv = createCanvas(250, 400); 
+  // Usiamo il renderer 2D di default 
+  let cnv = createCanvas(350, 400); 
   cnv.id('p5canvas');
   cnv.style('display', 'none'); 
 
   noLoop();
-  
-  // Avvio generazione
+
   setTimeout(generateAllBackgrounds, 500);
 }
 
 async function generateAllBackgrounds() {
   for (let i = 0; i < team.length; i++) {
-    // Aspetto un attimo tra una card e l'altra per non bloccare il browser
+    // Aspettiamo un attimo tra una card e l'altra per non bloccare il browser
     await new Promise(r => setTimeout(r, 100)); 
     generateSingleBackground(i);
   }
@@ -127,7 +126,6 @@ function generateSingleBackground(index) {
   const centerY = height / 2;
   
   // Definiamo quanto deve essere grande la macchia
-  // Lasciamo un margine (60px) per evitare che le sbavature vengano tagliate
   const radiusX = (width / 2); 
   const radiusY = (height / 2);
 
@@ -188,7 +186,7 @@ class Poly {
       grownVerts.push(v1);
       grownMods.push(chmod(mod));
       
-      const segment = p5.Vector.sub(v2, v1);
+      const segment = v2.copy().sub(v1);
       const len = segment.mag();
       segment.mult(rand());
       

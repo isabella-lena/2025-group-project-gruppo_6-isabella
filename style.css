@@ -4,8 +4,8 @@
 
 
 :root {
-  --text: #1c1a1a;
-  --muted: #1c1a1a;
+  --text: #4f4838;
+  --muted: #4f4838;
   --radius-outer: 999px;
   --radius-inner: 999px;
   --card-w: clamp(220px, 18vw, 260px); 
@@ -158,7 +158,7 @@ p {
 .meta {
   display: grid;
   gap: 6px;
-  padding: 32px;
+  padding: 0 10px 15px 10px;
   text-align: center;
 }
 .name {
@@ -171,7 +171,7 @@ p {
   font-family: "cormorant-garamond", serif;
 font-weight: 600;
 font-style: normal;
-  color: #1c1a1a;
+  color: #4f4838;
 }
 
 .description {
@@ -179,7 +179,7 @@ font-style: normal;
   font-family: "cormorant-garamond", serif;
   font-weight: 400;
   font-style: italic;
-  color: #1c1a1a;
+  color: #4f4838;
 
   opacity: 0; 
   max-height: 0; 
@@ -195,7 +195,7 @@ font-style: normal;
 
 /* Impostazioni immagine */
 .media {
-  margin-top: auto;
+  margin-top: 10px;
   border-radius: var(--radius-inner);
   overflow: hidden;
   aspect-ratio: 3 / 5;
